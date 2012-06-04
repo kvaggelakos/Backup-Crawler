@@ -13,7 +13,7 @@ from BeautifulSoup import BeautifulSoup, SoupStrainer
 
 
 # Global vars
-search_query = 'allinurl: %(search_term)s filetype:%(filetype)s'
+search_query = 'allinurl: %(search_term)s filetype:sql'
 download_dir = 'downloaded/'
 
 # This is the main entry point for the application and will start searching immidiately after validating the input parameters
@@ -23,28 +23,27 @@ def main():
 		os.makedirs(download_dir)
 
 	# Check input parameters
-	if (len(sys.argv) != 4):
-		start_search('/administrator/backups', 'sql', 20)
+	if (len(sys.argv) != 3):
+		start_search('/administrator/backups', 20)
 	else:
-		start_search(sys.argv[1], sys.argv[2], sys.argv[3])
+		start_search(sys.argv[1], sys.argv[2])
 
 
 # start_search will init the search for the given search term
 # @search_term The search term to search for when looking for 
-# @filetype The filetype to look for
 # @limit the upper limit of hosts to look into
-def start_search(search_term, filetype, limit):
-	print_settings(search_term, filetype, limit)
+def start_search(search_term, limit):
+	print_settings(search_term, limit)
 	# Start the search
 	for url in search(search_query % vars(), stop=limit):
 		print '***************'
-		handle_url(url, filetype)
+		handle_url(url)
 		print '***************'
 
 
 # This method will check for more backups in the same directory if directory listing is available
 # @url The url should be a url to an existing sql backup file
-def handle_url(url, filetype):
+def handle_url(url):
 	# Create directory to save dumps
 	base_dir = url[0:url.rfind('/')]
 	down_dir = download_dir + base_dir[7:base_dir.find('/',7)]
@@ -58,8 +57,8 @@ def handle_url(url, filetype):
 	for link in BeautifulSoup(response, parseOnlyThese=SoupStrainer('a')):
 		if (link.has_key('href')):
 			print 'Link found: %s' % link['href']
-			if (link['href'].find('.%s' % filetype) == -1 and link['href'].find('.tar') == -1):
-				print '%s was not of type: %s' % (link['href'], filetype)
+			if (link['href'].find('.sql') == -1 and link['href'].find('.tar') == -1):
+				print '%s was not of type: sql or tar'
 			else:
 				# Create the directory if needed
 				if not os.path.exists(down_dir):
@@ -86,10 +85,9 @@ def get_file_name(url):
 		return url[url.rfind('/') + 1:]
 
 # Prints the settings specified by the user
-def print_settings(search_term, filetype, limit):
+def print_settings(search_term, limit):
 	print '******************************************************'
 	print 'Search term: \'%s\'' % search_term
-	print 'File type: %s' % filetype
 	print 'Limit results: %i' % limit
 	print 'Resulting query: \'%s\'' % search_query % vars()
 	print '******************************************************'
