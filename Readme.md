@@ -7,8 +7,8 @@ The idea of doing this script started when I realized my backup plugin for wordp
 ## How to use
 
 ### Needed packages 
-* BeautifulSoup (easy_install BeautifulSoup)
-* httplib2 (easy_install httplib2)
+* BeautifulSoup `easy_install BeautifulSoup`
+* httplib2 `easy_install httplib2`
 
 ### Running
 To run this with no arguments (using defaults) just run:
