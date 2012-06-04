@@ -37,7 +37,9 @@ def start_search(search_term, filetype, limit):
 	print_settings(search_term, filetype, limit)
 	# Start the search
 	for url in search(search_query % vars(), stop=limit):
+		print '***************'
 		handle_url(url, filetype)
+		print '***************'
 
 
 # This method will check for more backups in the same directory if directory listing is available
@@ -48,41 +50,48 @@ def handle_url(url, filetype):
 	down_dir = download_dir + base_dir[7:base_dir.find('/',7)]
 
 	print 'Digging into: %s' % base_dir
-	if not os.path.exists(down_dir):
-		os.makedirs(down_dir)
-		print 'Created directory %s' % down_dir
 	
-	
-	# Get all links on this page
+	# Get all links on this page to try and find more backups in the directory listing if existing
 	http = httplib2.Http()
 	status, response = http.request(base_dir)
 
-
 	for link in BeautifulSoup(response, parseOnlyThese=SoupStrainer('a')):
 		if (link.has_key('href')):
-			if (link['href'].find('.%s' % filetype) == None):
-				print link['href'] + '%s was not of type: %s' % (link['href'], filetype)
+			print 'Link found: %s' % link['href']
+			if (link['href'].find('.%s' % filetype) == -1 and link['href'].find('.tar') == -1):
+				print '%s was not of type: %s' % (link['href'], filetype)
 			else:
-				if (download_file(link['href'], down_dir + link['href'][link['href'].rfind('/'):]) == None):
-					print 'There was a problem in downloading the file: %s' % link['href']
-
+				# Create the directory if needed
+				if not os.path.exists(down_dir):
+					os.makedirs(down_dir)
+					print 'Created directory %s' % down_dir
+				# Then download the file
+				download_file(base_dir + '/' + link['href'], down_dir + '/' + get_file_name(link['href']))
 
 def download_file(url, filename):
 	try:
 		print 'Downloading file: %s into %s' % (url, filename)
 		url_handle = urllib2.urlopen(url)
-		localFile = open('downloaded/%s' % filename, 'w')
+		localFile = open(filename, 'w')
 		localFile.write(url_handle.read())
 		localFile.close()
 	except:
+		print 'Error downloading the file: %s' % url
 		return None
 
+def get_file_name(url):
+	if (url.find('/') == -1):
+		return url
+	else:
+		return url[url.rfind('/') + 1:]
 
 # Prints the settings specified by the user
 def print_settings(search_term, filetype, limit):
+	print '******************************************************'
 	print 'Search term: \'%s\'' % search_term
 	print 'File type: %s' % filetype
 	print 'Limit results: %i' % limit
 	print 'Resulting query: \'%s\'' % search_query % vars()
+	print '******************************************************'
 
 main()
